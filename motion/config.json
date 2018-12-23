@@ -1,6 +1,6 @@
 {
   "name": "Motion",
-  "url": "https://github.com/dcmartin/hassio-addons",
+  "url": "https://github.com/slu125/hassio-addons",
   "version": "0.4.27",
   "slug": "motion",
   "description": "Motion addon from LINUX package https://motion-project.github.io/",
@@ -69,11 +69,11 @@
     "log_level": "info",
     "log_motion": 2,
     "devicedb": "motion",
-    "name": "hostname",
+    "name": "hassio.local",
     "username": "",
     "password": "",
-    "timezone": "America/Los_Angeles",
-    "unit_system": "imperial",
+    "timezone": "Europe/Berlin",
+    "unit_system": "metric",
     "cloudant": {
       "url": "",
       "username": "",
