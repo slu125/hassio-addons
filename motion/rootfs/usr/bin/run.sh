@@ -64,6 +64,19 @@ if [ "${VALUE}" != "null" ] && [ ! -z "${VALUE}" ]; then
   export MOTION_MQTT_HOST="${VALUE}"
 fi
 
+VALUE=$(jq -r ".mqtt.username" "${CONFIG_PATH}")
+if [ "${VALUE}" != "null" ] && [ ! -z "${VALUE}" ]; then
+  echo "Using MQTT username: ${VALUE}" >&2
+  MQTT='{"username":"'"${VALUE}"'"'
+  export MOTION_MQTT_USERNAME="${VALUE}"
+fi
+
+VALUE=$(jq -r ".mqtt.password" "${CONFIG_PATH}")
+if [ "${VALUE}" != "null" ] && [ ! -z "${VALUE}" ]; then
+  MQTT='{"password":"'"${VALUE}"'"'
+  export MOTION_MQTT_PASSWORD="${VALUE}"
+fi
+
 if [ -n "${MQTT:-}" ]; then
   VALUE=$(jq -r ".mqtt.port" "${CONFIG_PATH}")
   if [ "${VALUE}" == "null" ] || [ -z "${VALUE}" ]; then VALUE=1883; fi
@@ -679,7 +692,7 @@ if [ ! -s "${MOTION_JSON_FILE}" ]; then
   exit
 else
   echo "Publishing configuration to ${MOTION_MQTT_HOST} topic ${MOTION_DEVICE_DB}/${MOTION_DEVICE_NAME}/start" >&2
-  mosquitto_pub -r -q 2 -h "${MOTION_MQTT_HOST}" -p "${MOTION_MQTT_PORT}" -t "${MOTION_DEVICE_DB}/${MOTION_DEVICE_NAME}/start" -f "${MOTION_JSON_FILE}"
+  mosquitto_pub -r -u "${MOTION_MQTT_USERNAME}" -P "${MOTION_MQTT_PASSWORD}" -q 2 -h "${MOTION_MQTT_HOST}" -p "${MOTION_MQTT_PORT}" -t "${MOTION_DEVICE_DB}/${MOTION_DEVICE_NAME}/start" -f "${MOTION_JSON_FILE}"
 fi
 
 ###
