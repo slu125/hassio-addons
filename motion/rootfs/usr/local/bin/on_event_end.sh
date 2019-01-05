@@ -143,7 +143,7 @@ set date = `date +%s`
 set JSON = `jq '.elapsed='"$elapsed"'|.end='${LAST}'|.date='"$date"'|.images='"$images" "$lastjson"`
 
 if ( "$JSON" == "" ) then
-  if ($?USE_MQTT && $?DEBUG) mosquitto_pub -h "$MOTION_MQTT_HOST" -t "${MOTION_DEVICE_DB}/${MOTION_DEVICE_NAME}/debug" -m '{"DEBUG":"'$0:t'","pid":'$$',"camera":"'$CN'","event":"'"$EN"'","FAILED":"'"$lastjson"'"}'
+  if ($?USE_MQTT && $?DEBUG) mosquitto_pub -u "${MOTION_MQTT_USERNAME}" -P "${MOTION_MQTT_PASSWORD}" -h "$MOTION_MQTT_HOST" -t "${MOTION_DEVICE_DB}/${MOTION_DEVICE_NAME}/debug" -m '{"DEBUG":"'$0:t'","pid":'$$',"camera":"'$CN'","event":"'"$EN"'","FAILED":"'"$lastjson"'"}'
   if ($?DEBUG) echo "$0:t $$ -- Failed to update JSON $lastjson; exiting: $JSON" >& /dev/stderr
   goto done
 else
@@ -155,8 +155,8 @@ endif
 ## do MQTT
 if ($?MOTION_MQTT_HOST && $?MOTION_MQTT_PORT) then
   set MQTT_TOPIC = "$MOTION_DEVICE_DB/${MOTION_DEVICE_NAME}/${CN}/event/end"
-  mosquitto_pub -q 2 -r -i "$MOTION_DEVICE_NAME" -h "$MOTION_MQTT_HOST" -p "$MOTION_MQTT_PORT" -t "$MQTT_TOPIC" -f "$lastjson"
-  if ($?USE_MQTT && $?VERBOSE) mosquitto_pub -h "$MOTION_MQTT_HOST" -t "${MOTION_DEVICE_DB}/${MOTION_DEVICE_NAME}/debug" -m '{"VERBOSE":"'$0:t'","pid":'$$',"topic":"'$MQTT_TOPIC'","JSON":"'"$lastjson"'"}'
+  mosquitto_pub -q 2 -r -i "$MOTION_DEVICE_NAME" -u "${MOTION_MQTT_USERNAME}" -P "${MOTION_MQTT_PASSWORD}" -h "$MOTION_MQTT_HOST" -p "$MOTION_MQTT_PORT" -t "$MQTT_TOPIC" -f "$lastjson"
+  if ($?USE_MQTT && $?VERBOSE) mosquitto_pub -u "${MOTION_MQTT_USERNAME}" -P "${MOTION_MQTT_PASSWORD}" -h "$MOTION_MQTT_HOST" -t "${MOTION_DEVICE_DB}/${MOTION_DEVICE_NAME}/debug" -m '{"VERBOSE":"'$0:t'","pid":'$$',"topic":"'$MQTT_TOPIC'","JSON":"'"$lastjson"'"}'
   if ($?VERBOSE) echo "$0:t $$ -- Posted MQTT file $lastjson to host $MOTION_MQTT_HOST topic $MQTT_TOPIC" >& /dev/stderr
 endif
 
@@ -272,7 +272,7 @@ if ($#jpgs > 1) then
   # calculate average difference
   if ($#ps) @ avgdiff = $totaldiff / $#ps
   if ($#ps) @ avgsize = $totalsize / $#ps
-  if ($?USE_MQTT && $?VERBOSE) mosquitto_pub -h "$MOTION_MQTT_HOST" -t "${MOTION_DEVICE_DB}/${MOTION_DEVICE_NAME}/debug" -m '{"VERBOSE":"'$0:t'","pid":'$$',"diff":'$avgdiff',"size":'$avgsize'}'
+  if ($?USE_MQTT && $?VERBOSE) mosquitto_pub -u "${MOTION_MQTT_USERNAME}" -P "${MOTION_MQTT_PASSWORD}" -h "$MOTION_MQTT_HOST" -t "${MOTION_DEVICE_DB}/${MOTION_DEVICE_NAME}/debug" -m '{"VERBOSE":"'$0:t'","pid":'$$',"diff":'$avgdiff',"size":'$avgsize'}'
   if ($?VERBOSE) echo "$0:t $$ -- Average difference: $avgdiff; size: $avgsize from $#jpgs JPEGS" >& /dev/stderr
 
   ## BLEND
@@ -283,7 +283,7 @@ if ($#jpgs > 1) then
     if ($?DEBUG) echo "$0:t $$ -- Failed to convert $#jpgs into a blend: $blend" >& /dev/stderr
   else if ($?MOTION_MQTT_HOST && $?MOTION_MQTT_PORT) then
     set MQTT_TOPIC = "$MOTION_DEVICE_DB/${MOTION_DEVICE_NAME}/${CN}/image-blend"
-    mosquitto_pub -q 2 -r -i "$MOTION_DEVICE_NAME" -h "$MOTION_MQTT_HOST" -p "${MOTION_MQTT_PORT}" -t "$MQTT_TOPIC" -f "$blend"
+    mosquitto_pub -q 2 -r -i "$MOTION_DEVICE_NAME" -u "${MOTION_MQTT_USERNAME}" -P "${MOTION_MQTT_PASSWORD}" -h "$MOTION_MQTT_HOST" -p "${MOTION_MQTT_PORT}" -t "$MQTT_TOPIC" -f "$blend"
     if ($?USE_MQTT && $?VERBOSE) mosquitto_pub -h "${MOTION_MQTT_HOST}" -t "${MOTION_DEVICE_DB}/${MOTION_DEVICE_NAME}/debug" -m '{"VERBOSE":"'$0:t'","pid":'$$',"topic":"'"$MQTT_TOPIC"'"}'
     if ($?VERBOSE) echo "$0:t $$ -- ${MOTION_MQTT_HOST} $MQTT_TOPIC" >& /dev/stderr
   endif
@@ -330,7 +330,7 @@ if ($#jpgs > 1) then
     if ($?DEBUG) echo "$0:t $$ -- Failed to convert $#jpgs into a composite: $composite" >& /dev/stderr
   else if ($?MOTION_MQTT_HOST && $?MOTION_MQTT_PORT) then
     set MQTT_TOPIC = "$MOTION_DEVICE_DB/${MOTION_DEVICE_NAME}/${CN}/image-composite"
-    mosquitto_pub -q 2 -r -i "$MOTION_DEVICE_NAME" -h "$MOTION_MQTT_HOST" -p "${MOTION_MQTT_PORT}" -t "$MQTT_TOPIC" -f "$composite"
+    mosquitto_pub -q 2 -r -i "$MOTION_DEVICE_NAME" -u "${MOTION_MQTT_USERNAME}" -P "${MOTION_MQTT_PASSWORD}" -h "$MOTION_MQTT_HOST" -p "${MOTION_MQTT_PORT}" -t "$MQTT_TOPIC" -f "$composite"
     if ($?USE_MQTT && $?VERBOSE) mosquitto_pub -h "${MOTION_MQTT_HOST}" -t "${MOTION_DEVICE_DB}/${MOTION_DEVICE_NAME}/debug" -m '{"VERBOSE":"'$0:t'","pid":'$$',"topic":"'"$MQTT_TOPIC"'"}'
     if ($?VERBOSE) echo "$0:t $$ -- Posted file $composite to host ${MOTION_MQTT_HOST} topic $MQTT_TOPIC" >& /dev/stderr
   endif
@@ -340,7 +340,7 @@ endif
 
 ### GET post_pictures
 set post_pictures = `jq -r '.post_pictures' "$MOTION_JSON_FILE"`
-if ($?USE_MQTT && $?VERBOSE) mosquitto_pub -h "$MOTION_MQTT_HOST" -t "${MOTION_DEVICE_DB}/${MOTION_DEVICE_NAME}/debug" -m '{"VERBOSE":"'$0:t'","pid":'$$',"post_pictures":"'"$post_pictures"'"}'
+if ($?USE_MQTT && $?VERBOSE) mosquitto_pub -u "${MOTION_MQTT_USERNAME}" -P "${MOTION_MQTT_PASSWORD}" -h "$MOTION_MQTT_HOST" -t "${MOTION_DEVICE_DB}/${MOTION_DEVICE_NAME}/debug" -m '{"VERBOSE":"'$0:t'","pid":'$$',"post_pictures":"'"$post_pictures"'"}'
 if ($?VERBOSE) echo "$0:t $$ -- Posting pictures specified as: $post_pictures" >& /dev/stderr
 
 set IF = $jpgs[1]
@@ -369,7 +369,7 @@ endsw
 
 if ($#IF && -s "$IF" && $?MOTION_MQTT_HOST && $?MOTION_MQTT_PORT) then
   set MQTT_TOPIC = "$MOTION_DEVICE_DB/$MOTION_DEVICE_NAME/$CN/image"
-  mosquitto_pub -q 2 -r -i "$MOTION_DEVICE_NAME" -h "$MOTION_MQTT_HOST" -p "$MOTION_MQTT_PORT" -t "$MQTT_TOPIC" -f "$IF"
+  mosquitto_pub -q 2 -r -i "$MOTION_DEVICE_NAME" -u "${MOTION_MQTT_USERNAME}" -P "${MOTION_MQTT_PASSWORD}" -h "$MOTION_MQTT_HOST" -p "$MOTION_MQTT_PORT" -t "$MQTT_TOPIC" -f "$IF"
   if ($?USE_MQTT && $?VERBOSE) mosquitto_pub -h "${MOTION_MQTT_HOST}" -t "${MOTION_DEVICE_DB}/${MOTION_DEVICE_NAME}/debug" -m '{"VERBOSE":"'$0:t'","pid":'$$',"topic":"'"$MQTT_TOPIC"'","image":"'${IF}'"}'
   if ($?VERBOSE) echo "$0:t $$ -- Posting file $IF to host $MOTION_MQTT_HOST topic $MQTT_TOPIC" >& /dev/stderr
 else
@@ -413,7 +413,7 @@ if ($minimum_animate <= $#jpgs && $#jpgs > 1) then
     if ($?DEBUG) echo "$0:t $$ -- Failed to convert $#jpgs into a gif: $gif" >& /dev/stderr
   else if ($?MOTION_MQTT_HOST && $?MOTION_MQTT_PORT) then
     set MQTT_TOPIC = "$MOTION_DEVICE_DB/${MOTION_DEVICE_NAME}/${CN}/image-animated"
-    mosquitto_pub -q 2 -r -i "$MOTION_DEVICE_NAME" -h "$MOTION_MQTT_HOST" -p "${MOTION_MQTT_PORT}" -t "$MQTT_TOPIC" -f "$gif"
+    mosquitto_pub -q 2 -r -i "$MOTION_DEVICE_NAME" -u "${MOTION_MQTT_USERNAME}" -P "${MOTION_MQTT_PASSWORD}" -h "$MOTION_MQTT_HOST" -p "${MOTION_MQTT_PORT}" -t "$MQTT_TOPIC" -f "$gif"
     if ($?USE_MQTT && $?VERBOSE) mosquitto_pub -h "${MOTION_MQTT_HOST}" -t "${MOTION_DEVICE_DB}/${MOTION_DEVICE_NAME}/debug" -m '{"VERBOSE":"'$0:t'","pid":'$$',"topic":"'"$MQTT_TOPIC"'"}'
     if ($?VERBOSE) echo "$0:t $$ -- Posted file $gif to host ${MOTION_MQTT_HOST} topic $MQTT_TOPIC" >& /dev/stderr
   endif
@@ -428,7 +428,7 @@ if ($minimum_animate <= $#jpgs && $#jpgs > 1) then
     if ($?DEBUG) echo "$0:t $$ -- Failed to convert $#jpgs into a mask: $mask" >& /dev/stderr
   else if ($?MOTION_MQTT_HOST && $?MOTION_MQTT_PORT) then
     set MQTT_TOPIC = "$MOTION_DEVICE_DB/${MOTION_DEVICE_NAME}/${CN}/image-animated-mask"
-    mosquitto_pub -q 2 -r -i "$MOTION_DEVICE_NAME" -h "$MOTION_MQTT_HOST" -p "${MOTION_MQTT_PORT}" -t "$MQTT_TOPIC" -f "$mask"
+    mosquitto_pub -q 2 -r -i "$MOTION_DEVICE_NAME" -u "${MOTION_MQTT_USERNAME}" -P "${MOTION_MQTT_PASSWORD}" -h "$MOTION_MQTT_HOST" -p "${MOTION_MQTT_PORT}" -t "$MQTT_TOPIC" -f "$mask"
     if ($?USE_MQTT && $?VERBOSE) mosquitto_pub -h "${MOTION_MQTT_HOST}" -t "${MOTION_DEVICE_DB}/${MOTION_DEVICE_NAME}/debug" -m '{"VERBOSE":"'$0:t'","pid":'$$',"topic":"'"$MQTT_TOPIC"'"}'
     if ($?VERBOSE) echo "$0:t $$ -- MQTT post to host ${MOTION_MQTT_HOST} topic $MQTT_TOPIC file $mask" >& /dev/stderr
   endif
