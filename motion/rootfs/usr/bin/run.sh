@@ -67,13 +67,13 @@ fi
 VALUE=$(jq -r ".mqtt.username" "${CONFIG_PATH}")
 if [ "${VALUE}" != "null" ] && [ ! -z "${VALUE}" ]; then
   echo "Using MQTT username: ${VALUE}" >&2
-  MQTT='{"username":"'"${VALUE}"'"'
+  MQTT="${MQTT}"',"username":'"${VALUE}"'"'
   export MOTION_MQTT_USERNAME="${VALUE}"
 fi
 
 VALUE=$(jq -r ".mqtt.password" "${CONFIG_PATH}")
 if [ "${VALUE}" != "null" ] && [ ! -z "${VALUE}" ]; then
-  MQTT='{"password":"'"${VALUE}"'"'
+  MQTT="${MQTT}"',"password":'"${VALUE}"'"'
   export MOTION_MQTT_PASSWORD="${VALUE}"
 fi
 
