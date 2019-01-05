@@ -686,6 +686,7 @@ JSON="${JSON}"',"share_dir":"'"${VALUE}"'"'
 JSON="${JSON}"'}'
 
 export MOTION_JSON_FILE="${MOTION_CONF%/*}/${MOTION_DEVICE_NAME}.json"
+echo "Resulting JSON: ${JSON}" >&2
 echo "${JSON}" | jq '.' > "${MOTION_JSON_FILE}"
 if [ ! -s "${MOTION_JSON_FILE}" ]; then
   echo "Invalid JSON: ${JSON}" >&2
